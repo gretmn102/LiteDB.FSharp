@@ -108,8 +108,13 @@ let useDatabase mapper (f: LiteRepository -> unit) =
     FSharpBsonMapper.RegisterInheritedConverterType<IItem,Item2OfRecord>()
     use db = new LiteRepository(memoryStream, mapper)
     f db
-    
-    
+
+type RecSet = {
+    Id: int
+    IntSet: int Set
+    StringSet: string Set
+}
+
 let inheritedTypeTests mapper=
   testList "InheritedTypeTests Tests" [
   
@@ -186,4 +191,36 @@ let inheritedTypeTests mapper=
                 pass()
             | _ -> fail()    
         | _ -> fail()     
+
+    let (|Set|) (xs: _ Set) = Set.toList xs
+
+    testCase "Documents with Set == [] can be used" <| fun _ ->
+        useDatabase mapper<| fun db ->
+            let item =
+                { Id = 1; IntSet = Set.empty; StringSet = Set.empty }
+
+            let doc =
+                db 
+                |> LiteRepository.insertItem item
+                |> LiteRepository.query<RecSet> 
+                |> LiteQueryable.first
+
+            match doc.Id, doc.IntSet, doc.StringSet with
+            | 1, Set [], Set [] -> pass()
+            | _ -> fail()
+
+    testCase "Documents with Set == [...] can be used" <| fun _ ->
+        useDatabase mapper<| fun db ->
+            let item =
+                { Id = 1; IntSet = Set [1; 2; 3]; StringSet = Set ["1"; "2"; "3"] }
+
+            let doc =
+                db
+                |> LiteRepository.insertItem item
+                |> LiteRepository.query<RecSet> 
+                |> LiteQueryable.first
+
+            match doc.Id, doc.IntSet, doc.StringSet with
+            | 1, Set [1; 2; 3], Set ["1"; "2"; "3"] -> pass()
+            | _ -> fail()
   ]

@@ -117,8 +117,8 @@ namespace LiteDB.FSharp
                    mkParser printer parser
              }
 
-      | Shape.FSharpList s ->
-        s.Element.Accept {
+      | Shape.FSharpList _ | Shape.FSharpSet _ as s ->
+        s.Accept {
           new ITypeVisitor<Convert<'T>> with
             member __.Visit<'t>() =
               let eP = genPicklerCached<'t> ctx
