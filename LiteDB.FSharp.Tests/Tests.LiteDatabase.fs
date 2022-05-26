@@ -47,6 +47,11 @@ type RecOptGuid = {
     OtherId: Option<Guid>
 }
 
+type RecOptObjectId = {
+    Id: int
+    ObjectId: Option<ObjectId>
+}
+
 let pass() = Expect.isTrue true "passed"
 let fail() = Expect.isTrue false "failed"
 
@@ -217,6 +222,32 @@ let liteDatabaseUsage mapper =
                     | None -> fail()
                     | Some doc ->
                         match doc.Id, doc.Released with
+                        | 1, None -> pass()
+                        | _ -> fail()
+
+        testCase "Documents with optional ObjectId = Some can be used" <| fun _ ->
+            useDatabase mapper<| fun db ->
+                let docs = db.GetCollection<RecOptObjectId>()
+                docs.Insert { Id = 1; ObjectId = Some (ObjectId.NewObjectId()) } |> ignore
+                docs.FindAll()
+                |> Seq.tryHead
+                |> function
+                    | None -> fail()
+                    | Some doc ->
+                        match doc.Id, doc.ObjectId with
+                        | 1, Some objectId -> pass()
+                        | _ -> fail()
+
+        testCase "Documents with optional ObjectId = None can be used" <| fun _ ->
+            useDatabase mapper<| fun db ->
+                let docs = db.GetCollection<RecOptObjectId>()
+                docs.Insert { Id = 1; ObjectId = None } |> ignore
+                docs.FindAll()
+                |> Seq.tryHead
+                |> function
+                    | None -> fail()
+                    | Some doc ->
+                        match doc.Id, doc.ObjectId with
                         | 1, None -> pass()
                         | _ -> fail()
 

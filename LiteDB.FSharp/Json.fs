@@ -350,7 +350,12 @@ type FSharpJsonConverter() =
                     let path = jObject.First.Path
                     if path.StartsWith("$") then
                         let value = jObject.GetValue(path)
-                        value.ToObject(innerType,serializer)
+
+                        match path with
+                        | "$oid" ->
+                            box (ObjectId(value.ToString()))
+                        | _ ->
+                            value.ToObject(innerType,serializer)
                     else
                         jObject.ToObject(innerType,serializer)
                 | JsonToken.Null -> null
